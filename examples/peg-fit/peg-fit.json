@@ -1,0 +1,14 @@
+{
+    "parameterSets": {
+        "fit-0.1": {
+            "clearance": 0.1
+        },
+        "fit-0.2": {
+            "clearance": 0.2
+        },
+        "fit-0.3": {
+            "clearance": 0.3
+        }
+    },
+    "fileFormatVersion": "1"
+}

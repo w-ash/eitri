@@ -1,0 +1,30 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.py]
+indent_style = space
+indent_size = 4
+
+# shfmt reads its options from this section: shfmt -i 2 -ci -bn.
+[**.sh]
+indent_style = space
+indent_size = 2
+shell_variant = bash
+switch_case_indent = true
+binary_next_line = true
+
+[justfile]
+indent_style = space
+indent_size = 4
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.scad]
+indent_style = space
+indent_size = 4

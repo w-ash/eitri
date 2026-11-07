@@ -1,0 +1,32 @@
+#!/bin/bash
+# Print a Bambu Studio system profile as JSON, with its parents and included files merged in.
+# BAMBU_APP names the Bambu Studio app to read; just slice sets it to the app it runs.
+set -euo pipefail
+
+usage='Usage: tools/bambu-profile <machine|filament|process> "<profile name>"'
+if (($# != 2)); then echo "$usage" >&2; exit 2; fi
+kind=$1 name=$2
+case "$kind" in
+    machine | filament | process) ;;
+    *) echo "$usage" >&2; exit 2 ;;
+esac
+dir=${BAMBU_APP:-/Applications/BambuStudio.app}/Contents/Resources/profiles/BBL/$kind
+[[ -d "$dir" ]] || { echo "No Bambu Studio profile folder $dir." >&2; exit 1; }
+
+# Bambu Studio builds a profile from its parent, then the keys of each file in its "include" list,
+# then its own keys, so its own name and from win (PresetBundle.cpp, v02.08.02.61). Bambu Studio
+# skips include keys equal to its built-in defaults; this script can't see those, so applies all.
+# The filament folder also has vendor subfolders.
+shopt -s nullglob
+jq -n --arg kind "$kind" --arg name "$name" --arg dir "$dir" '
+    (reduce inputs as $p ({};
+        if ($p.name | type) == "string" then .[$p.name] = $p else . end)) as $by
+    | def resolve($n; $why):
+        ($by[$n] // ("No \($kind) profile \"\($n)\" in \($dir)\($why).\n" | halt_error(1))) as $p
+        | (if ($p.inherits // "") != "" then resolve($p.inherits; ", which \"\($n)\" inherits")
+           else {} end)
+          * (reduce ($p.include // [] | if type == "string" then [.] else . end)[] as $i ({};
+                . * (resolve($i; ", which \"\($n)\" includes") | del(.name, .instantiation))))
+          * ($p | del(.inherits, .include));
+      resolve($name; "")
+    ' "$dir"/*.json "$dir"/*/*.json

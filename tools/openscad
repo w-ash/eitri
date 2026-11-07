@@ -1,0 +1,25 @@
+#!/bin/bash
+# Run OpenSCAD with Manifold. Fail when OpenSCAD fails or prints an error or warning, except the
+# geometry cache's insert warning.
+set -uo pipefail
+
+logs=$(mktemp -d "${TMPDIR:-/tmp}/openscad.XXXXXX") || exit 1
+trap 'rm -rf "$logs"' EXIT
+
+# Show stdout and stderr and copy each to a log. An echo export prints its messages on stdout.
+# No --hardwarnings: it throws on every warning, including the cache's, so the grep below decides.
+{ { openscad --backend=manifold "$@" | tee "$logs/out"; } 2>&1 1>&3 3>&- \
+    | tee "$logs/err" >&2; } 3>&1
+status=$?
+if ((status != 0)); then exit "$status"; fi
+
+# A failed assert() can exit 0, and BOSL2 warns with echo(). The command line's geometry cache is a
+# fixed 100 MiB (GeometryCache.h:13), so a large plate prints "Node didn't fit into cache"; that is
+# only a failed cache insert (GeometryEvaluator.cc:359-360), and the geometry is still right.
+cause=$(grep -h -E '^(ERROR|TRACE|WARNING|DEPRECATED|EXPORT-ERROR):|^ECHO: "WARNING' \
+    "$logs/out" "$logs/err" | grep -v -F "WARNING: GeometryEvaluator: Node didn't fit into cache." \
+    | head -n 1)
+if [[ -n "$cause" ]]; then
+    echo "FAIL: OpenSCAD exited 0 but printed: $cause" >&2
+    exit 1
+fi

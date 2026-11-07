@@ -1,0 +1,16 @@
+# Build outputs: meshes and previews, rebuilt from the .scad sources
+out/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Per-machine Claude Code config
+.claude/settings.local.json
+
+# macOS
+.DS_Store
+/projects/

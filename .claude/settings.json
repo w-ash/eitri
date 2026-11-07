@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(just *)",
+      "Bash(openscad *)",
+      "Bash(sips *)"
+    ]
+  },
+  "claudeMdExcludes": [
+    "**/lib/BOSL2/CLAUDE.md"
+  ],
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/scad-compile.sh",
+            "args": []
+          }
+        ]
+      }
+    ]
+  }
+}
